@@ -11,7 +11,7 @@ Multi-city Hackathon Submission
 
 ## Deployment
 
-**Live URL:** *[Add deployed link here]*
+**Live URL:https://moneymuling-two.vercel.app/
 
 The application is publicly accessible and supports CSV upload directly from the homepage as required by the challenge guidelines.
 
