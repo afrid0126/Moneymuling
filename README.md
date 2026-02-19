@@ -1,16 +1,3 @@
-Perfect. Below is your **final, fully polished, professional README** formatted exactly as requested:
-
-* Every main section starts with `#`
-* Every sub-section starts with `##`
-* Clean, research-grade, Graph Theory focused
-* No heuristic scoring tables
-* Strong algorithm emphasis
-* Suitable for RIFT 2026 evaluation
-
-You can paste this directly into `README.md`.
-
----
-
 # Money Muling Detector
 
 ## Graph-Based Financial Crime Detection Engine
