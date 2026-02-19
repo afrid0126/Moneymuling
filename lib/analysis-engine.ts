@@ -63,22 +63,25 @@ export function analyzeTransactions(
   onProgress?.("Detecting circular fund routing (cycles)...", `${graph.nodes.size} accounts`);
   const t1 = performance.now();
   const cycles = detectCycles(graph);
+  const cycleDetectionMs = performance.now() - t1;
   console.log(
-    `[Analysis] Cycle detector done: ${cycles.length} cycles found (${((performance.now() - t1) / 1000).toFixed(2)}s)`
+    `[Analysis] Cycle detector done: ${cycles.length} cycles found (${(cycleDetectionMs / 1000).toFixed(2)}s)`
   );
 
   onProgress?.("Detecting smurfing patterns (fan-in/fan-out)...", `${cycles.length} cycles found`);
   const t2 = performance.now();
   const smurfingPatterns = detectSmurfing(graph);
+  const smurfingDetectionMs = performance.now() - t2;
   console.log(
-    `[Analysis] Smurfing detector done: ${smurfingPatterns.length} patterns found (${((performance.now() - t2) / 1000).toFixed(2)}s)`
+    `[Analysis] Smurfing detector done: ${smurfingPatterns.length} patterns found (${(smurfingDetectionMs / 1000).toFixed(2)}s)`
   );
 
   onProgress?.("Detecting shell networks...", `${smurfingPatterns.length} smurfing patterns found`);
   const t3 = performance.now();
   const shellChains = detectShellNetworks(graph);
+  const shellDetectionMs = performance.now() - t3;
   console.log(
-    `[Analysis] Shell detector done: ${shellChains.length} chains found (${((performance.now() - t3) / 1000).toFixed(2)}s)`
+    `[Analysis] Shell detector done: ${shellChains.length} chains found (${(shellDetectionMs / 1000).toFixed(2)}s)`
   );
 
   onProgress?.("Computing suspicion scores...");
@@ -100,6 +103,11 @@ export function analyzeTransactions(
 
   onProgress?.("Analysis complete!");
 
+  const detectionRate =
+    graph.nodes.size > 0
+      ? (suspiciousAccounts.length / graph.nodes.size) * 100
+      : 0;
+
   return {
     suspicious_accounts: suspiciousAccounts,
     fraud_rings: fraudRings,
@@ -111,6 +119,12 @@ export function analyzeTransactions(
       total_transactions_processed: transactions.length,
       was_sampled: wasSampled,
       original_transaction_count: originalCount,
+      algorithm_metrics: {
+        cycle_detection_ms: Math.round(cycleDetectionMs),
+        smurfing_detection_ms: Math.round(smurfingDetectionMs),
+        shell_detection_ms: Math.round(shellDetectionMs),
+        detection_rate_percent: Number(detectionRate.toFixed(2)),
+      },
     },
     graph,
   };

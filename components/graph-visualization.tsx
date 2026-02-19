@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { AnalysisResult } from "@/lib/types";
+
+type FilterType = "all" | "cyclic" | "sub_in" | "sub_out";
 
 interface GraphVisualizationProps {
   result: AnalysisResult;
@@ -31,9 +34,12 @@ interface LinkObject {
 
 export function GraphVisualization({ result }: GraphVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const fgRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fgRef = useRef<any>(null); // react-force-graph doesn't have ideal TS refs
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hoveredNode, setHoveredNode] = useState<NodeObject | null>(null);
+  const [filter, setFilter] = useState<FilterType>("all");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [ForceGraph, setForceGraph] = useState<any>(null);
   const initDone = useRef(false);
 
@@ -150,13 +156,42 @@ export function GraphVisualization({ result }: GraphVisualizationProps) {
       };
     });
 
+    let finalNodes = nodes;
+    let finalLinks = links;
+
+    if (filter !== "all") {
+      const activeAccountIds = new Set<string>();
+
+      const targetPatternMap: Record<FilterType, string> = {
+        all: "",
+        cyclic: "cycle",
+        sub_in: "fan_in",
+        sub_out: "fan_out",
+      };
+
+      const targetPatternType = targetPatternMap[filter];
+
+      result.fraud_rings.forEach((ring) => {
+        if (ring.pattern_type === targetPatternType) {
+          ring.member_accounts.forEach((acc) => activeAccountIds.add(acc));
+        }
+      });
+
+      finalNodes = nodes.filter((n) => activeAccountIds.has(n.id));
+
+      finalLinks = links.filter(
+        (l) => activeAccountIds.has(l.source) && activeAccountIds.has(l.target)
+      );
+    }
+
     console.log(
-      `[Graph Viz] ${nodes.length} nodes, ${links.length} links (deduped from ${result.graph.edges.length} edges)`
+      `[Graph Viz] ${finalNodes.length} nodes, ${finalLinks.length} links (deduped from ${result.graph.edges.length} edges)`
     );
-    return { nodes, links };
-  }, [result, suspiciousMap, ringColorMap]);
+    return { nodes: finalNodes, links: finalLinks };
+  }, [result, suspiciousMap, ringColorMap, filter]);
 
   const handleRef = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (fg: any) => {
       if (!fg) return;
       fgRef.current = fg;
@@ -189,6 +224,7 @@ export function GraphVisualization({ result }: GraphVisualizationProps) {
   );
 
   const handleNodeClick = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: any) => {
       setHoveredNode(node);
       if (fgRef.current && node) {
@@ -246,7 +282,6 @@ export function GraphVisualization({ result }: GraphVisualizationProps) {
       node: NodeObject,
       color: string,
       ctx: CanvasRenderingContext2D,
-      _globalScale: number
     ) => {
       const size = node.suspicious ? 10 : 6;
       ctx.fillStyle = color;
@@ -260,27 +295,62 @@ export function GraphVisualization({ result }: GraphVisualizationProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex flex-wrap items-center justify-between gap-2">
-          <span>Transaction Network Graph</span>
-          <div className="flex flex-wrap items-center gap-3 text-xs font-normal">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-gray-500" />
-              Normal
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-yellow-500" />
-              Low Risk
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-orange-500" />
-              Medium
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500" />
-              High Risk
+        <CardTitle className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span>Transaction Network Graph</span>
+            <span className="text-xs font-normal text-muted-foreground px-2 py-1 bg-muted rounded-md tracking-tight">
+              Nodes: {graphData.nodes.length.toLocaleString()} • Edges: {graphData.links.length.toLocaleString()}
             </span>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant={filter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("all")}
+            >
+              All
+            </Button>
+            <Button
+              variant={filter === "cyclic" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("cyclic")}
+            >
+              Cyclic
+            </Button>
+            <Button
+              variant={filter === "sub_in" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("sub_in")}
+            >
+              Smurfing Detection (Fan-In)
+            </Button>
+            <Button
+              variant={filter === "sub_out" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("sub_out")}
+            >
+              Smurfing Detection (Fan-Out)
+            </Button>
+          </div>
         </CardTitle>
+        <div className="flex flex-wrap items-center gap-3 text-xs font-normal text-muted-foreground mt-2 md:mt-0">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-gray-500" />
+            Normal
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-yellow-500" />
+            Low Risk
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-orange-500" />
+            Medium
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500" />
+            High Risk
+          </span>
+        </div>
       </CardHeader>
       <CardContent>
         <div

@@ -83,7 +83,7 @@ export function parseCSV(file: File): Promise<Transaction[]> {
   );
 
   return new Promise((resolve, reject) => {
-    Papa.parse<Record<string, any>>(file, {
+    Papa.parse<Record<string, unknown>>(file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
@@ -142,7 +142,7 @@ export function parseCSV(file: File): Promise<Transaction[]> {
                 ).trim(),
                 sender_id: String(row[reverseMap["sender_id"]]).trim(),
                 receiver_id: String(row[reverseMap["receiver_id"]]).trim(),
-                amount: parseFloat(row[reverseMap["amount"]]),
+                amount: parseFloat(String(row[reverseMap["amount"]])),
                 timestamp,
               };
             });

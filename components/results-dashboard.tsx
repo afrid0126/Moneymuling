@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { GraphVisualization } from "./graph-visualization";
 import { FraudRingTable } from "./fraud-ring-table";
 import { JSONDownload } from "./json-download";
+import { AlgorithmMetrics } from "./algorithm-metrics";
+import { PatternDistribution } from "./pattern-distribution";
 import { AnalysisResult } from "@/lib/types";
 
 interface ResultsDashboardProps {
@@ -59,6 +61,12 @@ export function ResultsDashboard({ result, onReset }: ResultsDashboardProps) {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      <AlgorithmMetrics result={result} />
+
+      <div className="grid grid-cols-1 gap-6 items-start">
+        <PatternDistribution result={result} />
       </div>
 
       <GraphVisualization result={result} />

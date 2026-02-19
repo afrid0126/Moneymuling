@@ -127,7 +127,12 @@ function isLikelyLegitimate(
   _graph: DirectedGraph,
   type: "fan_in" | "fan_out"
 ): boolean {
-  const n = node as any;
+  const n = node as unknown as {
+    outDegree: number;
+    inDegree: number;
+    transactions: Transaction[];
+    id: string;
+  };
 
   if (type === "fan_in") {
     const sendRatio = n.outDegree / Math.max(n.inDegree, 1);

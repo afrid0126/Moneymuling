@@ -179,6 +179,7 @@ export function computeScores(
 
     let finalScore = score.baseScore;
     if (uniquePatternTypes.size >= 2) finalScore *= 1.3;
+
     finalScore = Math.min(100, Math.round(finalScore * 10) / 10);
 
     const uniqueRingIds = [...score.ringIdSet];

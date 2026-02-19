@@ -56,6 +56,13 @@ export interface SuspiciousAccount {
   ring_ids: string[];
 }
 
+export interface AlgorithmMetrics {
+  cycle_detection_ms: number;
+  smurfing_detection_ms: number;
+  shell_detection_ms: number;
+  detection_rate_percent: number;
+}
+
 export interface AnalysisSummary {
   total_accounts_analyzed: number;
   suspicious_accounts_flagged: number;
@@ -64,6 +71,7 @@ export interface AnalysisSummary {
   total_transactions_processed: number;
   was_sampled: boolean;
   original_transaction_count: number;
+  algorithm_metrics: AlgorithmMetrics;
 }
 
 export interface AnalysisResult {
